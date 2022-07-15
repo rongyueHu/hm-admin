@@ -61,8 +61,10 @@ export default {
           console.log(res)
           // todo 把token存到vuex中，并且持久化 localStorage
           this.token = res.data.data.token
+          console.log('token', this.token)
           this.$store.commit('setUser', this.token)
           this.$router.push('/welcome')
+          this.$message.success('登录成功')
         } catch (err) {
           console.log(err)
         }

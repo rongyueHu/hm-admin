@@ -94,7 +94,7 @@ export const editUser = ({ id, email, mobile }) => {
     method: 'PUT',
     url: `users/${id}`,
     data: {
-      id, email, mobile
+      email, mobile
     }
   })
 }
@@ -115,10 +115,7 @@ export const editUser = ({ id, email, mobile }) => {
 export const deleteUser = (id) => {
   return request({
     method: 'DELETE',
-    url: `users/${id}`,
-    data: {
-      id
-    }
+    url: `users/${id}`
   })
 }
 
@@ -142,7 +139,7 @@ export const roleUser = ({ id, rid }) => {
     method: 'PUT',
     url: `users/${id}/role`,
     data: {
-      id, rid
+      rid
     }
   })
 }
