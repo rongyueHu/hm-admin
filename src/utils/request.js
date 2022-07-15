@@ -10,9 +10,7 @@ export default instance // 导出axios实例
 instance.interceptors.request.use(function (config) {
   // 在发送请求之前做些什么
   if (store.state.token) {
-    config.headers = {
-      Authorization: store.state.token
-    }
+    config.headers.Authorization = store.state.token
   }
   return config
 }, function (error) {

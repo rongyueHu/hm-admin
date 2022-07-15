@@ -12,9 +12,9 @@
       <div class="search">
         <el-input placeholder="请输入内容" v-model="userlist.query">
           <el-button
+            @click="user"
             slot="append"
             icon="el-icon-search"
-            @click="user"
           ></el-button>
         </el-input>
         <!-- 添加用户 -->
@@ -25,7 +25,7 @@
       <!-- 表格 -->
       <el-table :data="userlist.users" border style="width: 100%">
         <!-- id -->
-        <el-table-column prop="id" label="#" width="60"> </el-table-column>
+        <el-table-column type="index" label="#" width="60"> </el-table-column>
         <!-- 姓名 -->
         <el-table-column prop="username" label="姓名" width="250">
         </el-table-column>
@@ -45,24 +45,34 @@
         <!-- 操作 -->
         <el-table-column prop="handle" label="操作">
           <div class="handle">
+            <!-- 编辑用户 -->
             <el-button
               type="primary"
               icon="el-icon-edit"
+              @click="dialogFormVisible1 = true"
+            ></el-button>
+            <el-button
+              type="danger"
+              icon="el-icon-delete"
               @click="open"
             ></el-button>
-            <el-button type="danger" icon="el-icon-delete"></el-button>
-            <el-button type="warning" icon="el-icon-setting"></el-button>
+            <el-button
+              type="warning"
+              icon="el-icon-setting"
+              @click="dialogFormVisible2 = true"
+            ></el-button>
           </div>
         </el-table-column>
       </el-table>
       <!-- 分页 -->
       <div class="block">
+        <!-- pagesize当前每页显示多少条 pagenum当前的页数 -->
         <el-pagination
           @size-change="handleSizeChange"
           @current-change="handleCurrentChange"
-          :current-page="currentPage4"
+          :current-page="userlist.pagenum"
           :page-sizes="[1, 2, 5, 10]"
-          :page-size="10"
+          :page-size="userlist.pagesize"
           layout="total, sizes, prev, pager, next, jumper"
           :total="userlist.total"
         >
@@ -95,7 +105,11 @@
         </el-form-item>
         <!-- 邮箱 -->
         <el-form-item label="邮箱" prop="email" :label-width="formLabelWidth">
-          <el-input v-model="form.email" autocomplete="off"></el-input>
+          <el-input
+            debounce="500"
+            v-model="form.email"
+            autocomplete="off"
+          ></el-input>
         </el-form-item>
         <!-- 手机号 -->
         <el-form-item
@@ -111,7 +125,65 @@
         <el-button type="primary" @click="addUser">确 定</el-button>
       </div>
     </el-dialog>
-    <!--  <AddUser></AddUser> -->
+    <!-- 编辑用户 -->
+    <el-dialog title="编辑用户" :visible.sync="dialogFormVisible1">
+      <el-form :model="form" :rules="rules" ref="addFormRef">
+        <!-- 用户名 -->
+        <el-form-item
+          label="用户名称"
+          prop="username"
+          :label-width="formLabelWidth"
+          hide-required-asterisk
+        >
+          <el-input
+            disabled
+            v-model="form.username"
+            autocomplete="off"
+          ></el-input>
+        </el-form-item>
+        <!-- 邮箱 -->
+        <el-form-item label="邮箱" prop="email" :label-width="formLabelWidth">
+          <el-input
+            debounce="500"
+            v-model="form.email"
+            autocomplete="off"
+          ></el-input>
+        </el-form-item>
+        <!-- 手机号 -->
+        <el-form-item
+          label="手机号"
+          prop="mobile"
+          :label-width="formLabelWidth"
+        >
+          <el-input v-model="form.mobile" autocomplete="off"></el-input>
+        </el-form-item>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="dialogFormVisible1 = false">取 消</el-button>
+        <el-button type="primary" @click="dialogFormVisible1 = false"
+          >确 定</el-button
+        >
+      </div>
+    </el-dialog>
+    <!-- 设置用户 -->
+    <el-dialog title="分配新角色" :visible.sync="dialogFormVisible2">
+      <p>当前的用户</p>
+      <p>当前的角色</p>
+      <el-form>
+        <el-form-item label="分配角色" :label-width="formLabelWidth">
+          <el-select v-model="value1" placeholder="请选择">
+            <el-option label="区域一" value="shanghai"></el-option>
+            <el-option label="区域二" value="beijing"></el-option>
+          </el-select>
+        </el-form-item>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="dialogFormVisible2 = false">取 消</el-button>
+        <el-button type="primary" @click="dialogFormVisible2 = false"
+          >确 定</el-button
+        >
+      </div>
+    </el-dialog>
   </div>
 </template>
 
@@ -119,8 +191,7 @@
 // import { Message } from 'element-ui'
 import { validateMobile, validateEmail } from '@/utils/validate'
 import { mapGetters } from 'vuex'
-import { addUser } from '@/api/user'
-
+import { addUser, editUser } from '@/api/user'
 // import AddUser from './components/AddUser.vue'
 export default {
   name: 'user',
@@ -145,16 +216,17 @@ export default {
       }
     }
     return {
-      //  queryInfo: { query: '', pagenum: 1, pagesize: 2 }, // input
       /* 弹窗 */
       dialogFormVisible: false,
+      dialogFormVisible1: false,
+      dialogFormVisible2: false,
+      value1: '', // 设置表单
       form: {
         username: '',
         password: '',
         email: '',
         mobile: ''
       },
-      formlist: {}, // 添加用户
       rules: {
         username: [
           { required: true, message: '请输入用户名', trigger: 'blur' },
@@ -173,22 +245,28 @@ export default {
           { validator: validateMobileFn, trigger: 'blur' }
         ]
       },
-      formLabelWidth: '80px',
-      /* 分页 */
-      currentPage4: 1
+      formLabelWidth: '80px'
     }
   },
   methods: {
-    handleSizeChange (val) {
-      console.log(`每页 ${val} 条`)
-    },
-    handleCurrentChange (val) {
-      console.log(`当前页: ${val}`)
-    },
+    /* 获取初始数据 */
     async user () {
       try {
         await this.$store.dispatch('user/user', { query: null, pagenum: 1, pagesize: 5 })
       } catch (err) { this.$message.error('校验失败') }
+    },
+    /* 分页 */
+    handleSizeChange (val) {
+      // console.log(`每页 ${val} 条`)
+      this.userlist.pagesize = val
+      console.log(val)
+      // this.user()
+    },
+    handleCurrentChange (val) {
+      // console.log(`当前页: ${val}`)
+      this.userlist.pagenum = val
+      console.log(val)
+      // this.user()
     },
     // 重置表单
     addDialogClosed () {
@@ -200,12 +278,38 @@ export default {
         console.log(valid)
         // eslint-disable-next-line no-useless-return
         if (!valid) return
-        const res = await addUser(this.form)
-        console.log('2', res)
-        this.formlist = res.data.data
+        try {
+          const res = await addUser(this.form)
+          console.log('2', res)
+          this.formlist = res.data.data
+        } catch (err) { console.log(err) }
+      })
+    },
+    // 编辑用户
+    async editUser () {
+      try {
+        const res = await editUser()
+        console.log('ed', res)
+      } catch (err) { console.log(err) }
+    },
+    // 删除用户
+    open () {
+      this.$confirm('此操作将永久删除该文件, 是否继续?', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        this.$message({
+          type: 'success',
+          message: '删除成功!'
+        })
+      }).catch(() => {
+        this.$message({
+          type: 'info',
+          message: '已取消删除'
+        })
       })
     }
-    // 编辑用户
   },
   computed: {
     ...mapGetters(['userlist'])
@@ -246,5 +350,9 @@ export default {
 /* 分页 */
 .block {
   margin-top: 20px;
+}
+/* 设置 */
+.el-dialog p {
+  margin-left: 12px;
 }
 </style>
