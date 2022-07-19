@@ -70,3 +70,15 @@ export const addRoles = ({ roleName, roleDesc }) => {
     }
   })
 }
+// 编辑角色
+
+export const editRoles = ({ id, roleName, roleDesc }) => {
+  return request({
+    url: `roles/${id}`,
+    method: 'PUT',
+    data: {
+      roleDesc,
+      roleName
+    }
+  })
+}

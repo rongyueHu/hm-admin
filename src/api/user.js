@@ -69,6 +69,19 @@ export const searchUser = (id) => {
     params: { id }
   })
 }
+// 修改用户状态
+/**
+ *
+ * @param {用户Id} uId
+ * @param {用户状态} type
+ * @returns
+ */
+export const getStatus = (uId, type) => {
+  return request({
+    url: `users/${uId}/state/${type}`,
+    method: 'PUT'
+  })
+}
 /* 编辑用户 */
 /* 200表示成功，500表示失败 */
 /* {
@@ -134,12 +147,16 @@ export const deleteUser = (id) => {
   }
 } */
 
-export const roleUser = ({ id, rid }) => {
+/**
+ *分配用户角色
+ * @param {用户id} id
+ * @param {角色id} rid
+ * @returns
+ */
+export const installRoles = (id, { rid }) => {
   return request({
     method: 'PUT',
     url: `users/${id}/role`,
-    data: {
-      rid
-    }
+    data: { rid }
   })
 }

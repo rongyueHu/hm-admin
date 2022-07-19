@@ -6,6 +6,7 @@
         <img src="@/assets/LOGO.png" alt="" />
         <span>博鹰后台管理系统</span>
       </div>
+      <!-- 退出不仅要跳转，还要清除token -->
       <button @click="$router.push('/login')">退出</button>
     </el-header>
     <el-container>

@@ -45,7 +45,10 @@
         <!-- 作用域插槽决定了属性，就可以将父级prop删除 -->
         <el-table-column label="状态" width="250"
           ><template slot-scope="scope">
-            <el-switch v-model="scope.row.mg_state"></el-switch>
+            <el-switch
+              @change="onChange(scope.row)"
+              v-model="scope.row.mg_state"
+            ></el-switch>
           </template>
         </el-table-column>
         <!-- 操作 -->
@@ -70,7 +73,7 @@
               type="warning"
               size="mini"
               icon="el-icon-setting"
-              @click="installDialog = true"
+              @click="settingFormVisible(scope.row)"
             ></el-button>
           </template>
         </el-table-column>
@@ -188,30 +191,33 @@
         >
       </span>
     </el-dialog>
-    <!-- 设置用户 -->
+    <!-- 分配角色 -->
     <el-dialog title="分配新角色" :visible.sync="dialogFormVisible2">
-      <p>当前的用户</p>
-      <p>当前的角色</p>
+      <p>当前的用户:{{ presentUser }}</p>
+      <p>当前的角色:{{ presentRole }}</p>
       <el-form>
         <el-form-item label="分配角色" :label-width="formLabelWidth">
-          <el-select v-model="value1" placeholder="请选择">
-            <el-option label="区域一" value="shanghai"></el-option>
-            <el-option label="区域二" value="beijing"></el-option>
+          <el-select v-model="rid" placeholder="请选择">
+            <el-option
+              v-for="item in roleslist"
+              :key="item.id"
+              :label="item.roleName"
+              :value="item.roleName"
+            ></el-option>
           </el-select>
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
         <el-button @click="dialogFormVisible2 = false">取 消</el-button>
-        <el-button type="primary" @click="dialogFormVisible2 = false"
-          >确 定</el-button
-        >
+        <el-button type="primary" @click="install">确 定</el-button>
       </div>
     </el-dialog>
   </div>
 </template>
 <script>
-import { validateMobile, validateEmail } from '@/utils/validate' // 引入手机，邮箱封装方法
-import { addUser, user, searchUser, editUser, deleteUser } from '@/api/user' // 引入封装api
+import { validateMobile, validateEmail } from '@/utils/validate' // 引入手机，邮箱封装校验方法
+import { addUser, user, getStatus, searchUser, editUser, deleteUser, installRoles } from '@/api/user' // 引入封装api
+import { rolesList } from '@/api/roles'
 export default {
   name: 'User', // 组件命名
   created () {
@@ -240,16 +246,15 @@ export default {
       dialogFormVisible: false, // 添加用户，控制添加用户对话框的编辑与隐藏
       editDialogVisible: false, // 编辑用户，控制编辑用户对话框的显示与隐藏
       deleteDialogVisible: false, // 删除用户，控制删除用户对话框的显示与隐藏
-      dialogFormVisible2: false, // 设置用户，控制删除用户对话框的显示与隐藏
-      value1: '', // 设置表单
-      // 添加用户规则
+      dialogFormVisible2: false, // 设置用户，控制设置用户权限对话框的显示与隐藏
+      // 添加用户列表
       form: {
         username: '',
         password: '',
         email: '',
         mobile: ''
       },
-      // 编辑用户对象
+      // 编辑用户列表
       editform: {
       },
       // 添加用户规则
@@ -287,11 +292,18 @@ export default {
         ]
       },
       total: 0, // 合计条数
-      obj: {
+      obj: { // 获取列表参数
         query: '', pagenum: 1, pagesize: 5
       },
-      userlist: [],
-      formLabelWidth: '80px'
+      userlist: [], // 用户列表
+      formLabelWidth: '80px',
+      userinfo: {}, // 存储用户状态信息
+      // 分配用户角色
+      userId: null,
+      presentRole: '', // 当前角色
+      presentUser: '', // 当前用户
+      rid: '', // 分配角色id
+      roleslist: {}// 角色列表
     }
   },
   methods: {
@@ -321,6 +333,19 @@ export default {
     // 重置编辑用户表单
     editDialogClosed () {
       this.$refs.editFormRef.resetFields()
+    },
+    // 改变用户状态
+    async onChange (userinfo) {
+      this.id = userinfo.id
+      this.type = userinfo.mg_state
+      console.log(userinfo)
+      const res = await getStatus(this.id, this.type)
+      console.log(res)
+      if (res.data.meta.status !== 200) {
+        userinfo.mg_state = !userinfo.mg_state
+        this.$message.error('用户状态更改失败')
+      }
+      this.$message.success('用户状态更新成功')
     },
     // 添加用户
     addUser () {
@@ -391,21 +416,47 @@ export default {
       if (res.data.meta.status !== 200) {
         this.$message.error('删除失败')
       } else {
-        this.$message.error('删除成功')
+        this.$message.success('删除成功')
       }
       // 刷新列表
       this.getUserList()
+    },
+    // 获取角色列表
+    // 分配角色
+    async settingFormVisible (row) {
+      console.log('row', row)
+      this.userId = row.id // 用户id
+      this.presentRole = row.role_name // 当前角色
+      this.presentUser = row.username // 当前用户
+      try {
+        const res = await rolesList()
+        console.log(res)
+        this.roleslist = res.data.data // 角色列表
+      } catch (err) {
+        console.log(err)
+      }
+      this.dialogFormVisible2 = true
+    },
+    // 分配角色确认
+    async install () {
+      try {
+        const res = await installRoles(this.userId, { rid: this.rid })
+        console.log('分配', res)
+        if (res.data.meta.status === 400) {
+          this.$message.error('分配角色失败')
+        } else {
+          this.$message.success('分配角色成功')
+        }
+      } catch (err) {
+        console.log(err)
+      }
+      this.presentRole = this.roleslist.role_Name
+      this.dialogFormVisible2 = false
+      this.getUserList()
     }
-    // 设置用户
-  },
-
-  computed: {},
-  watch: {},
-  filters: {},
-  components: {}
+  }
 }
 </script>
-
 <style scoped lang='less'>
 .container {
   padding: 20px;

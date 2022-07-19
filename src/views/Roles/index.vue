@@ -25,24 +25,6 @@
               <el-form-item label="商品名称">
                 <span>{{ props.row.name }}</span>
               </el-form-item>
-              <el-form-item label="所属店铺">
-                <span>{{ props.row.shop }}</span>
-              </el-form-item>
-              <el-form-item label="商品 ID">
-                <span>{{ props.row.id }}</span>
-              </el-form-item>
-              <el-form-item label="店铺 ID">
-                <span>{{ props.row.shopId }}</span>
-              </el-form-item>
-              <el-form-item label="商品分类">
-                <span>{{ props.row.category }}</span>
-              </el-form-item>
-              <el-form-item label="店铺地址">
-                <span>{{ props.row.address }}</span>
-              </el-form-item>
-              <el-form-item label="商品描述">
-                <span>{{ props.row.desc }}</span>
-              </el-form-item>
             </el-form>
           </template>
         </el-table-column>
@@ -63,6 +45,7 @@
               icon="el-icon-edit"
               size="mini"
               @click="showEditDialog(scope.row)"
+              :visible.sync="dialogFormVisible"
               >编辑</el-button
             >
             <!-- 删除按钮 -->
@@ -184,6 +167,11 @@ export default {
         }
         this.getRolesList()
       })
+    },
+    // 编辑用户
+    showEditDialog (row) {
+      this.dialogFormVisible = true
+      console.log(row)
     }
   },
   computed: {},
