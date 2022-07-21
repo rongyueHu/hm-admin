@@ -71,8 +71,13 @@ export const addRoles = ({ roleName, roleDesc }) => {
   })
 }
 // 编辑角色
-
-export const editRoles = ({ id, roleName, roleDesc }) => {
+/**
+ *
+ * @param {角色id} id
+ * @param {角色名称及描述} param1
+ * @returns
+ */
+export const editRoles = (id, { roleName, roleDesc }) => {
   return request({
     url: `roles/${id}`,
     method: 'PUT',
@@ -80,5 +85,52 @@ export const editRoles = ({ id, roleName, roleDesc }) => {
       roleDesc,
       roleName
     }
+  })
+}
+
+/*
+{
+  "data": null,
+  "meta": {
+    "msg": "删除成功",
+    "status": 200
+  }
+} */
+// 删除角色
+export const delRole = (id) => {
+  return request({
+    url: `roles/${id}`,
+    method: 'DELETE'
+  })
+}
+
+// 角色授权
+/*
+{
+  "data": null,
+  "meta": {
+    "msg": "更新成功",
+    "status": 200
+  }
+} */
+/**
+ *
+ * @param {角色id} roleld
+ * @param {权限id列表} param1
+ * @returns
+ */
+export const rolesRight = (roleld, { rids }) => {
+  return request({
+    method: 'POST',
+    url: `roles/${roleld}/rights`,
+    data: { rids }
+  })
+}
+
+// 删除角色指定权限
+export const delRolesRights = (roleId, rightId) => {
+  return request({
+    method: 'DELETE',
+    url: `roles/${roleId}/rights/${rightId}`
   })
 }

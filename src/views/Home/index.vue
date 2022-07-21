@@ -7,7 +7,7 @@
         <span>博鹰后台管理系统</span>
       </div>
       <!-- 退出不仅要跳转，还要清除token -->
-      <button @click="$router.push('/login')">退出</button>
+      <button @click="exit">退出</button>
     </el-header>
     <el-container>
       <!-- 主体部分 -->
@@ -156,6 +156,18 @@ export default {
         console.log(res)
         this.list = res.data.data
       } catch (err) { console.log(err) }
+    },
+    async exit () {
+      const exitResult = await this.$confirm('确认退出', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      })
+      if (exitResult !== 'confirm') {
+        return this.$message.info('已取消退出操作')
+      } else {
+        this.$router.push('/login')
+      }
     }
   },
   computed: {},
